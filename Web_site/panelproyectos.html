@@ -205,15 +205,15 @@
 							    		</tr>
 							    		<tr>
 							    			<td><label>Responsable:</label></td>
-							    			<td>Nombre del responsable</td>
+							    			<td><label id="lblResponsable">Nombre del responsable</label></td>
 							    		</tr>
 							    		<tr>
 							    			<td><label>Beneficiario directo:</label></td>
-							    			<td>Nombre del beneficiario</td>
+							    			<td><label id="lblBeneficiario"> Nombre del beneficiario</label></td>
 							    		</tr>
 							    		<tr>
 							    			<td><label>Costo estipulado:</label></td>
-							    			<td>0000.00</td>
+							    			<td><label id="lblCosto"> 0000.00</label></td>
 							    		</tr>
 							    	</table>	
 							    </div>
@@ -222,15 +222,15 @@
 							    	<table class="table">
 							    		<tr>
 							    			<td><label>Descripción:</label></td>
-							    			<td>Nombre del proyecto</td>
+							    			<td><label id="lblDescripcion">Nombre del proyecto</label> </td>
 							    		</tr>
 							    		<tr>
 							    			<td><label>Tipo de proyecto:</label></td>
-							    			<td>Tipo de proyecto</td>
+							    			<td><label id="lblTipoProyecto"> Tipo de proyecto</label></td>
 							    		</tr>
 							    		<tr>
 							    			<td><label>Estado actual:</label></td>
-							    			<td>Estado actual de proyecto</td>
+							    			<td><label id="lblEstado">Estado actual de proyecto</label> </td>
 							    		</tr>
 							    		<tr>
 							    			<td class="tr-patrocinadores" colspan="2" size="1">
@@ -274,7 +274,7 @@
 								    	</tr>
 								    </thead>
 								    <tbody>
-								    	<tr>
+								    	<!-- <tr>
 								    		<td>1</td>
 								    		<td>Tarea 1</td>
 								    		<td>Urgente</td>
@@ -321,7 +321,7 @@
 								    		<td>dd/mm/aaaa</td>
 								    		<td>dd/mm/aaaa</td>
 								    		<td>Usuario1, usuario2, usuario3</td>
-								    	</tr>
+								    	</tr> -->
 								    </tbody>
 							    </table>
 							</div>
@@ -350,7 +350,7 @@
 								    	</tr>
 								    </thead>
 								    <tbody>
-								    	<tr>
+								    	<!-- <tr>
 								    		<td>1</td>
 								    		<td>Material 1</td>
 								    		<td>Proveedor x</td>
@@ -373,7 +373,7 @@
 								    		<td>400</td>
 								    		<td>0.00</td>
 								    		<td>0.00</td>
-								    	</tr>
+								    	</tr> -->
 								    </tbody>
 							    </table>
 							</div>
@@ -463,20 +463,20 @@
 						    	<label for="exampleInputPassword1">Tipo de proyecto</label>
 						    		<select class="form-control" id="selTipoProyecto">
 									    <option>Seleccione uno</option>
-									    <option>Tipo proyecto 1</option>
-									    <option>Tipo proyecto 2</option>
-									    <option>Tipo proyecto 3</option>
-									    <option>Tipo proyecto 4</option>
+									    <option value="1">Tipo proyecto 1</option>
+									    <option value="2">Tipo proyecto 2</option>
+									    <option value="3">Tipo proyecto 3</option>
+									    <option value="4">Tipo proyecto 4</option>
 								 	</select>	
 						  	</div>
 						  	<div class="form-group col-lg-4">
 						    	<label for="exampleInputPassword1">Estado actual</label>
 							    	<select class="form-control" id="selEstados">
 								    	<option>Seleccione un estado</option>
-								    	<option>Estado 1</option>
-								    	<option>Estado 2</option>
-								    	<option>Estado 3</option>
-								    	<option>Estado 4</option>
+								    	<option value="1">Estado 1</option>
+								    	<option value="2">Estado 2</option>
+								    	<option value="3">Estado 3</option>
+								    	<option value="4">Estado 4</option>
 								 	</select>	
 						  	</div>
 					  	</div>

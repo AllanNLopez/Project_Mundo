@@ -3,11 +3,119 @@
 //variables globales
 var cuerpo="";
 var tblProyectos; //tabla lateral de proyectos
+var tblTareas; //tabla de tareas
+var tblMateriales; //tabla materiales
+var valor = 0;
+var codTareaSel =0;
+var usuarioActual=1;
 
 
+//****************funciones del panel de proyectos: tabla materiales*****************
+function initTablaMateriales(){
+	tblMateriales = $('#tabla-materiales').DataTable(
+			{
+		        "scrollY":        "250px",
+		        "scrollCollapse": true,
+		        "paging":         false
+		    });
+}
+
+function addMaterial(codMaterial,proveedor,material,cantidad,precio,total){
+	tblMateriales.row.add( [codMaterial,
+							proveedor,
+							material,
+							cantidad,
+							precio,
+							total ] ).draw( false );
+}
+
+function cargarMateriales(codigoProyecto){
+	var parametros = "caso=4&codigo="+codigoProyecto+"";
+	$.ajax(
+        {
+          url: "../Web_site/controles-php/proyectosControl.php",
+          data: parametros,
+          method:"POST",
+          success:function(respuesta){
+          	console.log(respuesta);
+          	if (respuesta!="null") {
+      		  json = respuesta;
+      		  tblMateriales.clear().draw();
+              var json_array = json.split('*');
+              for (var i = 0; i<json_array.length; i++) { 
+                var objMaterial = JSON.parse(json_array[i]);
+                addMaterial(objMaterial.codMaterial,
+							objMaterial.proveedor,
+							objMaterial.material,
+							objMaterial.cantidad,
+							objMaterial.precio,
+							objMaterial.total );
+              }
+          	}else
+          		alert("no hay tareas");
+              
+          },
+          error:function(){
+            alert("Ocurrio un error");
+          }
+        }
+      );  
+}
+
+//****************funciones del panel de proyectos: tabla tareas*****************
+function initTablaTareas(){
+	tblTareas = $('#tabla-tareas').DataTable(
+				{
+			        "scrollY":        "250px",
+			        "scrollCollapse": true,
+			        "paging":         false
+			    }
+			);
+}
+
+function agregarTarea(codTarea, nombreTarea,descripcion,prioridad,fechaInicio,fechaEntrega){
+	tblTareas.row.add( [codTarea,
+						nombreTarea,
+						descripcion,
+						prioridad,
+						fechaInicio,
+						fechaEntrega ] ).draw( false );
+}
+
+function cargarTareas(codigoProyecto){
+	var parametros = "caso=3&codigo="+codigoProyecto+"";
+	$.ajax(
+        {
+          url: "../Web_site/controles-php/proyectosControl.php",
+          data: parametros,
+          method:"POST",
+          success:function(respuesta){
+          	console.log(respuesta);
+          	if (respuesta!="null") {
+      		  json = respuesta;
+      		  tblTareas.clear().draw();
+              var json_array = json.split('*');
+              for (var i = 0; i<json_array.length; i++) { 
+                var objTarea = JSON.parse(json_array[i]);
+                agregarTarea(objTarea.codTarea,
+							objTarea.nombreTarea,
+							objTarea.descripcion,
+							objTarea.prioridad,
+							objTarea.fechaInicio,
+							objTarea.fechaEntrega );
+              }
+          	}else
+          		alert("no hay tareas");
+              
+          },
+          error:function(){
+            alert("Ocurrio un error");
+          }
+        }
+      );  
+}
 
 //****************funciones del panel de proyectos*****************
-
 function cargarSeleccionado(code){
 	var parametros = "caso=2&codigo="+code+"";
 	$.ajax(
@@ -24,7 +132,11 @@ function cargarSeleccionado(code){
             $('#lblInicioProy').html(proyecto.fechaInicio);
             $('#lblFinalProy').html(proyecto.fechaFinal);
             $('#lblLugar').html(proyecto.lugar);
-
+            $('#lblBeneficiario').html(proyecto.beneficiario);
+            $('#lblCosto').html(proyecto.costoEstimado);
+            $('#lblDescripcion').html(proyecto.descripcion);
+            $('#lblEstado').html(proyecto.estado); 
+            $('#lblResponsable').html(proyecto.responsable);
           },
           error:function(){
             alert("Ocurrio un error");
@@ -34,25 +146,6 @@ function cargarSeleccionado(code){
 
 }
 
-function consultaAjax(url, parametros, metodo){
-	var retorno;
-	$.ajax(
-        {
-          url: url,
-          data: parametros,
-          method:metodo,
-          success:function(respuesta){ 
-              retorno = respuesta;
-              console.log(respuesta);
-          },
-          error:function(){
-            retorno = respuesta;
-          }
-        }
-      ); 
-
-     return retorno;   
-}
  
 //funcion para consultar todos los proyectos 
 function cargarProyectos(){
@@ -63,7 +156,7 @@ function cargarProyectos(){
           data: parametros,
           method:"POST",
           success:function(respuesta){
-          	console.log(respuesta);
+          	/*console.log(respuesta);*/
               json = respuesta;
               var json_array = json.split("-");
               for (var i = 0; i<json_array.length; i++) {
@@ -86,8 +179,7 @@ function inicializarTabla(){
 					        "scrollY":        "250px",
 					        "scrollCollapse": true,
 					        "paging":         false
-					    });	
-}
+	});
 
 	$('#tabla-proyectos tbody').on( 'click', 'tr', function () {
 	        if ( $(this).hasClass('selected') ) {
@@ -99,18 +191,21 @@ function inicializarTabla(){
 	        }
 	});
 
-    $('#tabla-proyectos tbody').on( 'dblclick', 'tr', function () {
-        tblProyectos.$('tr.selected').removeClass('selected');
-        $(this).addClass('selected'); 
-    } );
+	$('#tabla-proyectos tbody').on( 'dblclick', 'tr', function () {
+	    tblProyectos.$('tr.selected').removeClass('selected');
+	    $(this).addClass('selected'); 
+	} );
 
 
-    $('#tabla-proyectos tbody').on( 'dblclick', 'td', function () { 
-           valor = tblProyectos.cell( this ).data();
-           if( !isNaN(valor) ) { 
+	$('#tabla-proyectos tbody').on( 'dblclick', 'td', function () { 
+	       valor = tblProyectos.cell( this ).data();
+	       if( !isNaN(valor) ) { 
 			  cargarSeleccionado(valor);
+			  cargarTareas(valor);
+			  cargarMateriales(valor);
 			}
-   	});
+		});	
+}
 
 function addProyecto(cod, nombre, estado){ 
     tblProyectos.row.add( [cod,nombre,estado ] ).draw( false );
@@ -118,7 +213,34 @@ function addProyecto(cod, nombre, estado){
 
 
 $('#btnGuardarProyecto').click(function(){
-	addProyecto("4", 'nombre de proyecto', 'proceso');
+
+	var parametros = 
+	"nombre="+$('#txtNomProyecto').val()
+	+"&fechaInicio="+$('#txtFechaInicio').val()
+	+"&fechaFinal="+$('#txtFechaFinal').val()
+	+"&lugar="+$('#txtLugar').val()
+	+"&costo="+$('#txtCosto').val()
+	+"&beneficiario="+$('#txtBeneficiario').val()
+	+"&codEstado="+$('#selEstados').val()
+	+"&codTipoProyecto="+$('#selTipoProyecto').val()
+	+"&descripcion="+$('#txtDescripcion').val()
+	+"&codUsuario="+usuarioActual+"";
+	console.log(parametros);
+	$.ajax(
+	        {
+	          url: "../Web_site/controles-php/registrarProyecto.php",
+	          data: parametros,
+	          method:"POST",
+	          success:function(respuesta){
+	          	 alert(respuesta);
+	          },
+	          error:function(){
+	            alert("Ocurrio un error");
+	          }
+	        }
+	      );   
+
+	addProyecto(valor, $('#txtNomProyecto').val(), 'proceso');
 	$('#frmNuevoProyecto').modal('hide');
 });
 
@@ -128,23 +250,18 @@ $(document).ready( function ()
 				
 			 	inicializarTabla();
 			 	cargarProyectos();
+			 	initTablaTareas();
+			 	initTablaMateriales();
 
-			    $('#tabla-tareas').DataTable(
-						{
-					        "scrollY":        "250px",
-					        "scrollCollapse": true,
-					        "paging":         false
-					    }
-					);
 
-			    $('#tabla-materiales').DataTable(
-						{
-					        "scrollY":        "250px",
-					        "scrollCollapse": true,
-					        "paging":         false
-					    }
-					);
+	//Funciones de la tabla de proyectos	 	
+	
 
+	//Funciones de lta tabla de tareas
+
+    
+
+    //Funciones de la tabla de materiales 
 			    $('#tabla-colaboradores').DataTable(
 						{
 					        "scrollY":        "250px",
