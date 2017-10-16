@@ -65,7 +65,7 @@
 }
 
 .tr-patrocinadores{
-	height: 200px;
+	height: 120px;
 	overflow-y: scroll;
 }
 
@@ -261,6 +261,10 @@ body{
 
 .mitabla td{
 	padding: 5px;
+}
+
+.toolbar-proy{
+	float: left;
 }
 
 table.dataTable tr.group td{font-weight:bold;background-color:#e0e0e0}

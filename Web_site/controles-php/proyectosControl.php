@@ -1,16 +1,33 @@
-<?php
-	
+<?php 
+	/*
+		 CASOS:
+		 1. consulta todos los proyectos
+		 2. consulta la información de un proyecto
+		 3. conculta todas las tares de un proyecto
+		 4. consultas de todos los materiales de un proyecto 
+		 5. selecciona los colaboradores del proyecto seleccionado:
+		 6. cargar todos los estados disponibles en la base de datos
+		 7. carga todos los diferentes tipos de proyectos establecidos en la base de datos 
+		 8. carga todos los patrocinadores en el sistema
+		 9. carga todos los patrocinadoresde un proyecto especifico 
+
+
+	*/ 
+	 
 	$caso = $_POST['caso'];
 	$codigoProyecto = $_POST['codigo'];
 	include_once("../class/class_conexion.php");
 	include_once("../class/clase_Proyectos.php");
 	include_once("../class/clase_Tareas.php");
-	include_once("../class/clase_Material.php");
+	include_once("../class/clase_Material.php"); 
+	include_once("../class/class_colaborador.php");
 	$miConexion = new Conexion();
 	$proyecto = new Proyecto();
 	$JSONLine = "";
-
-
+	$listResponsables = ""; 
+	$miConexion = new Conexion();
+	$proyecto = new Proyecto();
+	$JSONLine = ""; 
 	switch ($caso) {
 		//consultar todos los proyectos
 		case '1':
@@ -31,9 +48,9 @@
 
 			echo rtrim($JSONLine,"-");
 			break;
-		
+		  
 		case '2':
-			//consultar todos los datos de un proyecto
+			//consultar todos los datos de un proyecto 
 			$dataProyecto = 
 				"Select A.codProyecto, A.nombreProyecto, A.fechaInicio, A.fechafinal, A.lugar, A.descripcion, A.beneficiario,"
 			    ."B.estado, A.costoEstimado, "
@@ -57,6 +74,7 @@
 				$proyecto->setDescripcion($fila['descripcion']);
 				$proyecto->setCostoEstimado($fila['costoEstimado']);
 				$proyecto->setResponsable($fila['nombreUsuario']);
+				$proyecto->setBeneficiario($fila['beneficiario']);
 
 				$JSONLine = $JSONLine.$proyecto->toJSON()."-";
 				
@@ -69,29 +87,40 @@
 			$miConexion->cerrarConexion();
 
 			break;
-
+  
 		case '3':
-			//consulta de todas las tareas de este proyecto:
+				//consulta de todas las tareas de este proyecto:
 			$sqltareas ="SELECT codTarea, nombreTarea, descripcion, prioridad, fechaInicio, fechaEntrega  FROM tbltareas WHERE codProyecto = ".$codigoProyecto;
 			$tarea = new Tarea();
 			$resultado = $miConexion->ejecutarInstruccion($sqltareas);
 			$cant = $miConexion->cantidadRegistros($resultado);
 			if ($cant>0) {
 				while ($fila = $miConexion->obtenerFila($resultado)){
+						//antes de llenar la tabla debemos identificar a los responsables de las tareas
+						$sqlResponsables = 
+										"select c.nombreUsuario from tblusuarioxtarea a "
+										."inner join tbltareas b on a.codTarea = b.codTarea "
+										."inner join tblusuarios c on a.codUsuario = c.codUsuario "
+										."where b.codProyecto = ".$codigoProyecto." and a.codTarea = ".$fila['codTarea'];
+
+						$rstResponsables =$miConexion->ejecutarInstruccion($sqlResponsables);
+						while ($row = $miConexion->obtenerFila($rstResponsables)) {
+							$listResponsables = $listResponsables." ".$row['nombreUsuario'].",";
+						}
+						$miConexion->liberarResultado($rstResponsables);
 						$tarea->construir(
 										$fila['codTarea'],
-										$fila['nombreTarea'],
-										$fila['descripcion'],
+										$fila['nombreTarea'],										
 										$fila['prioridad'],
 										$fila['fechaInicio'],
-										$fila['fechaEntrega']	
+										$fila['fechaEntrega'],
+										$listResponsables	
 										);
-
 					$JSONLine = $JSONLine.$tarea->toJSON()."*";
-					
+					$listResponsables ="";
 				}
 				if ($cant==1) {
-					echo $JSONLine;
+					echo rtrim($JSONLine,"*");
 				}else
 					echo rtrim($JSONLine,"*");
 			}else
@@ -126,10 +155,9 @@
 
 			$miConexion->cerrarConexion();*/
 			break;
-
-		
+  
 		case '4':
-			//consultas de todos los materiales de un proyecto 
+			//consultas de todos los materiales de un proyecto  
 			$sqlMateriales = "SELECT codMaterial, proveedor, material, cant, precio, total FROM tblmateriales WHERE codProyecto = ".$codigoProyecto;
 			$material = new Material();
 			$resultado = $miConexion->ejecutarInstruccion($sqlMateriales);
@@ -158,11 +186,181 @@
 			$miConexion->liberarResultado($resultado);
 			$miConexion->cerrarConexion();
 			break;
+ 
+		//selecciona los colaboradores del proyecto seleccionado:
+		case '5':
+			$sqlColaboradores = 
+								"select a.codUsuario, "
+									."	a.nombreUsuario, "
+									."	c.tipo_usuario, "
+									."	a.departamento, "
+									."	a.cargo, "
+									."  b.Rol "
+								."FROM tblusuarios a "
+								."inner join tblusuarioxproyecto b on a.codUsuario = b.codUsuario "
+								."inner join tbltipousuario c on a.codTipoUsuario = c.codTipoUsuario "
+								."WHERE b.codProyecto = ".$codigoProyecto;
 
+			$resultado = $miConexion->ejecutarInstruccion($sqlColaboradores);
+			$cant = $miConexion->cantidadRegistros($resultado); 
+			$colaborador = new Colaborador();
+			if ($cant>0) {
+
+				while ($fila = $miConexion->obtenerFila($resultado)){
+						$colaborador->construir(
+										$fila['codUsuario'],
+										$fila['nombreUsuario'],
+										$fila['tipo_usuario'],
+										$fila['departamento'],
+										$fila['cargo'],
+										$fila['Rol']
+										);
+
+					$JSONLine = $JSONLine.$colaborador->toJSON()."*";
+					
+				}
+				if ($cant==1) {
+					echo $JSONLine;
+				}else
+					echo rtrim($JSONLine,"*");
+			}else
+				echo "null";
+
+			$miConexion->liberarResultado($resultado);
+			$miConexion->cerrarConexion();
+			break;
+
+		//cargar todos los estados disponibles en la base de datos:
+		case '6':
+			$sqlEstados = "select codEstado, estado from tblestados";
+			$resultado = $miConexion->ejecutarInstruccion($sqlEstados);
+			$cant = $miConexion->cantidadRegistros($resultado); 
+			if ($cant>0) {
+				$estadosArray = array();
+				$i=0;
+				while ($fila = $miConexion->obtenerFila($resultado)){
+					$estadosArray[$i]["codigo"] = $fila['codEstado'];
+					$estadosArray[$i]["estado"] = $fila['estado'];
+					$i++;				
+				}
+				$JSONLine = json_encode($estadosArray);	
+				if ($cant==1) {
+					echo $JSONLine;
+				}else
+					echo $JSONLine;
+			}else
+				echo "null";
+
+			$miConexion->liberarResultado($resultado);
+			$miConexion->cerrarConexion(); 
+			break;
+
+		//carga todos los diferentes tipos de proyectos establecidos en la base de datos 
+		case '7':
+			$sqlTipos = "select codTiposProyecto, tipoProyecto from tiposproyectos";
+			$resultado = $miConexion->ejecutarInstruccion($sqlTipos);
+			$cant = $miConexion->cantidadRegistros($resultado); 
+			if ($cant>0) {
+				$estadosArray = array();
+				$i=0;
+				while ($fila = $miConexion->obtenerFila($resultado)){
+					$estadosArray[$i]["codigo"] = $fila['codTiposProyecto'];
+					$estadosArray[$i]["tipo"] = $fila['tipoProyecto'];
+					$JSONLine = json_encode($estadosArray);	
+					$i++;				
+				}
+				if ($cant==1) {
+					echo $JSONLine;
+				}else
+					echo $JSONLine;
+			}else
+				echo "null";
+
+			$miConexion->liberarResultado($resultado);
+			$miConexion->cerrarConexion(); 
+			break;
+
+		//carga todos los patrocinadores en el sistema
+		case '8':
+			$sqlEstados = "select codPatrocinador, nombre from tblpatrocinadores";
+			$resultado = $miConexion->ejecutarInstruccion($sqlEstados);
+			$cant = $miConexion->cantidadRegistros($resultado); 
+			if ($cant>0) {
+				$arreglo = array();
+				$i=0;
+				while ($fila = $miConexion->obtenerFila($resultado)){
+					$arreglo[$i]["codigo"] = $fila['codPatrocinador'];
+					$arreglo[$i]["nombre"] = $fila['nombre'];
+					$i++;				
+				}
+				$JSONLine = json_encode(array_values($arreglo));	
+				if ($cant==1) {
+					echo $JSONLine;
+				}else
+					echo $JSONLine;
+			}else
+				echo "null";
+
+			$miConexion->liberarResultado($resultado);
+			$miConexion->cerrarConexion(); 
+			break;
+			/* $sqlPatrocinadores = "select codPatrocinador, nombre from tblpatrocinadores";
+			$resultado = $miConexion->ejecutarInstruccion($sqlPatrocinadores);
+			$cant = $miConexion->cantidadRegistros($resultado); 
+			if ($cant>0) {
+				$estadosArray = array();
+				$i=0;
+				while ($fila = $miConexion->obtenerFila($resultado)){
+					$estadosArray[$i]["codigo"] = $fila['codPatrocinador'];
+					$estadosArray[$i]["nombre"] = $fila['nombre'];
+					$i++;				
+				}
+				for ($i=0; $i < count($estadosArray) ; $i++) { 
+					$JSONLine = $JSONLine.'{"codigo" : "'.$estadosArray[$i]['codigo'].'","nombre" : "'.$estadosArray[$i]['nombre'].'"}*';
+				}
+				//$JSONLine = json_encode($estadosArray);	
+				if ($cant==1) {
+					echo $JSONLine;
+				}else
+					echo rtrim($JSONLine, "*");
+			}else
+				echo "null";
+
+			$miConexion->liberarResultado($resultado);
+			$miConexion->cerrarConexion(); 
+			break; */
+		
+		// carga todos los patrocinadoresde un proyecto especifico
+		case '9':
+			$sqlPatrocinadoresxproyecto = "SELECT A.codPatrocinador, A.CodProyecto, B.nombre from "
+										."tblpatrocinadoresxproyecto A inner join tblpatrocinadores B on A.codPatrocinador = B.codPatrocinador "
+										."where A.codProyecto = ".$codigoProyecto;
+			$resultado = $miConexion->ejecutarInstruccion($sqlPatrocinadoresxproyecto);
+			$cant = $miConexion->cantidadRegistros($resultado); 
+			if ($cant>0) {
+				$patxproyectoArr = array();
+				$i=0;
+				while ($fila = $miConexion->obtenerFila($resultado)){
+					$patxproyectoArr[$i]["codigoPatrocinador"] = $fila['codPatrocinador'];
+					$patxproyectoArr[$i]["nombre"] = $fila['nombre'];
+					$JSONLine = json_encode($patxproyectoArr);	
+					$i++;				
+				}
+				if ($cant==1) {
+					echo $JSONLine;
+				}else
+					echo $JSONLine;
+			}else
+				echo "null";
+			
+			$miConexion->liberarResultado($resultado);
+			$miConexion->cerrarConexion(); 
+			break;
 
 		default:
-			# code...
-			break;
+		# code...
+		break; 
+ 
 	}
 
 	 
